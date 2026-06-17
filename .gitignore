@@ -1,6 +1,7 @@
 api/
 assets/
 storage/
+tmp-screens/
 
 .DS_Store
 Thumbs.db
