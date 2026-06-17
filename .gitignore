@@ -1,0 +1,6 @@
+api/
+assets/
+storage/
+
+.DS_Store
+Thumbs.db
