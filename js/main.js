@@ -99,9 +99,9 @@
     const button = form.querySelector("button[type='submit']");
     if (button instanceof HTMLButtonElement) {
       button.disabled = true;
-      button.textContent = "Передаем мастеру...";
+      button.textContent = "Отправляем задачу...";
     }
-    setStatus("Передаем описание мастеру...");
+    setStatus("Отправляем задачу мастеру...");
 
     try {
       const response = await fetch(form.action, {
@@ -127,13 +127,13 @@
       }
 
       form.reset();
-      setStatus(data.message || "Заявка отправлена. Мастер получит информацию по автомобилю и свяжется с вами, чтобы уточнить детали и подобрать удобное время.", "success");
+      setStatus(data.message || "Заявка отправлена. Мастер свяжется с вами для уточнения времени и деталей.", "success");
     } catch (error) {
       setStatus("Не удалось отправить описание. Позвоните по телефону +7 (920) 621-75-75.", "error");
     } finally {
       if (button instanceof HTMLButtonElement) {
         button.disabled = false;
-        button.textContent = "Описать проблему мастеру";
+        button.textContent = "Отправить задачу мастеру";
       }
     }
   });
