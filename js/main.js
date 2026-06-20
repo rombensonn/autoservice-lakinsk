@@ -1,139 +1,54 @@
-(() => {
-  const header = document.querySelector("[data-header]");
-  const toggle = document.querySelector("[data-menu-toggle]");
-  const nav = document.querySelector("[data-nav]");
-  const form = document.querySelector("[data-lead-form]");
-  const year = document.querySelector("[data-year]");
+(function () {
+  const form = document.querySelector('[data-lead-form]');
+  const status = document.querySelector('[data-form-status]');
 
-  if (year) {
-    year.textContent = new Date().getFullYear();
+  if (!form || !status) {
+    return;
   }
 
-  if (header) {
-    const setHeaderState = () => {
-      header.classList.toggle("is-scrolled", window.scrollY > 12);
-    };
-    setHeaderState();
-    window.addEventListener("scroll", setHeaderState, { passive: true });
-  }
+  const submitButton = form.querySelector('button[type="submit"]');
+  const initialButtonText = submitButton ? submitButton.textContent : '';
 
-  if (toggle && nav) {
-    toggle.addEventListener("click", () => {
-      const isOpen = nav.classList.toggle("is-open");
-      toggle.setAttribute("aria-expanded", String(isOpen));
-    });
-
-    nav.addEventListener("click", (event) => {
-      if (event.target instanceof HTMLAnchorElement) {
-        nav.classList.remove("is-open");
-        toggle.setAttribute("aria-expanded", "false");
-      }
-    });
-  }
-
-  document.querySelectorAll("[data-service]").forEach((link) => {
-    link.addEventListener("click", () => {
-      if (!form) return;
-      const service = link.getAttribute("data-service");
-      const select = form.querySelector("select[name='service']");
-      if (service && select instanceof HTMLSelectElement) {
-        select.value = service;
-      }
-    });
-  });
-
-  if (!form) return;
-
-  const status = form.querySelector("[data-form-status]");
-  const requiredFields = Array.from(form.querySelectorAll("[required]"));
-
-  const setStatus = (message, type = "") => {
-    if (!status) return;
+  function setStatus(message, type) {
     status.textContent = message;
-    status.className = "form-status";
-    if (type) status.classList.add(`is-${type}`);
-  };
+    status.className = 'form-status form-status--' + type;
+  }
 
-  const setInvalid = (field, invalid) => {
-    field.classList.toggle("is-invalid", invalid);
-    if (field.type === "checkbox") {
-      field.closest(".checkbox-row")?.classList.toggle("is-invalid", invalid);
-    }
-  };
-
-  const validate = () => {
-    let isValid = true;
-    requiredFields.forEach((field) => {
-      const invalid = field.type === "checkbox" ? !field.checked : !field.value.trim();
-      setInvalid(field, invalid);
-      if (invalid) isValid = false;
-    });
-
-    const phone = form.querySelector("input[name='phone']");
-    if (phone instanceof HTMLInputElement) {
-      const digits = phone.value.replace(/\D/g, "");
-      const invalidPhone = digits.length < 10 || digits.length > 12;
-      setInvalid(phone, invalidPhone);
-      if (invalidPhone) isValid = false;
-    }
-
-    return isValid;
-  };
-
-  form.addEventListener("input", (event) => {
-    const target = event.target;
-    if (target instanceof HTMLElement) {
-      setInvalid(target, false);
-    }
-    setStatus("");
-  });
-
-  form.addEventListener("submit", async (event) => {
+  form.addEventListener('submit', async function (event) {
     event.preventDefault();
 
-    if (!validate()) {
-      setStatus("Заполните обязательные поля: телефон, услугу и описание задачи.", "error");
+    if (form.dataset.staticForm === 'true') {
+      setStatus('Это статическая версия для просмотра на GitHub Pages. Для заявки позвоните или напишите во ВКонтакте.', 'info');
       return;
     }
 
-    const button = form.querySelector("button[type='submit']");
-    if (button instanceof HTMLButtonElement) {
-      button.disabled = true;
-      button.textContent = "Передаем мастеру...";
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = 'Отправляем заявку...';
     }
-    setStatus("Передаем описание мастеру...");
+
+    setStatus('Проверяем данные и отправляем заявку.', 'info');
 
     try {
       const response = await fetch(form.action, {
-        method: "POST",
+        method: 'POST',
         body: new FormData(form),
-        headers: {
-          Accept: "application/json",
-          "X-Requested-With": "XMLHttpRequest"
-        }
+        headers: { Accept: 'application/json' },
       });
-
       const data = await response.json();
 
       if (!response.ok || !data.ok) {
-        setStatus(data.message || "Не удалось отправить описание. Проверьте поля или позвоните по телефону.", "error");
-        if (data.errors) {
-          Object.keys(data.errors).forEach((name) => {
-            const field = form.querySelector(`[name="${CSS.escape(name)}"]`);
-            if (field instanceof HTMLElement) setInvalid(field, true);
-          });
-        }
-        return;
+        throw new Error(data.error || 'Заявка не отправилась. Попробуйте еще раз.');
       }
 
       form.reset();
-      setStatus(data.message || "Заявка отправлена. Мастер получит информацию по автомобилю и свяжется с вами, чтобы уточнить детали и подобрать удобное время.", "success");
+      setStatus('Заявка отправлена. Мастер свяжется с вами по указанному телефону.', 'success');
     } catch (error) {
-      setStatus("Не удалось отправить описание. Позвоните по телефону +7 (920) 621-75-75.", "error");
+      setStatus(error.message || 'Что-то пошло не так. Позвоните нам напрямую.', 'error');
     } finally {
-      if (button instanceof HTMLButtonElement) {
-        button.disabled = false;
-        button.textContent = "Описать проблему мастеру";
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = initialButtonText;
       }
     }
   });

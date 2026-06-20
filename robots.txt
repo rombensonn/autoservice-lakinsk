@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://rombensonn.github.io/autoservice-lakinsk/sitemap.xml
